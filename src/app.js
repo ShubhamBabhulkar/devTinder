@@ -1,6 +1,40 @@
 const express = require("express");
+const connectDB = require("./config/database");
 const {adminAuth, userAuth} = require("./middleware/auth");
 const app = express();
+const User = require("./models/user");
+
+
+
+app.post("/signup", async (req, res) => {
+    const user = new User({
+            firstName: "Sushil",
+            lastName: "Babhulkar",
+            emailId: "sushilbabhulkar@gmail.com",
+            password: "sushil@123",
+            age:34,
+            gender: "Male"
+        });
+   
+    try{
+       await user.save();
+       res.send("User Added Successfully!!");
+   } catch(err) {
+        res.status(400).send('User not added !!!'+ err.message);
+   }
+})
+
+connectDB()
+.then(() => {
+    console.log("Database connected Sucessfully!!!");
+    app.listen(3000, () => {
+        console.log('Server is running on port 3000');
+    });
+})
+.catch((err) => {
+    console.log("Database can not connected!!!");
+})
+
 
 app.use("/admin", adminAuth);
 // app.use("/user", userAuth);
@@ -28,7 +62,13 @@ app.get("/user",userAuth, (req, res, next)=>{
 
 app.get("/user/login", (req, res)=>{
     console.log('req', req.query);
-    res.send('user loged in successfully');
+    try{
+        // res.send('user loged in successfully');
+        throw new Error('here is error');
+    } catch(err) {
+        // res.status(500).send(err.message);
+        res.status(500).send('Some error  Contact support team!!!');
+    }
 })
 
 
@@ -86,10 +126,17 @@ app.patch("/user", (req, res) => {
 // })
 
 //Wild card route go in side below route when route not match with any
-app.use("/", (req, res) => {
-    res.send('Route is not match');
+// app.use("/", (req, res) => {
+//     res.send('Route is not match');
+// })
+
+// Below is the error handing alway alway keep at the bottom
+app.use("/", (err, req, res, next) => {
+    if(err) {
+        res.status(500).send('Something went wrong!!!');
+    }
 })
 
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-});
+// app.listen(3000, () => {
+//     console.log('Server is running on port 3000');
+// });

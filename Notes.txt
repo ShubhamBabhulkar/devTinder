@@ -1,0 +1,76 @@
+Create a folder with project name.
+add sr folder and app.js file in side src folder.
+install express npm package.
+Create a middleware fo;der in side the src and create auth.js file in side the the folder.
+where you can add the authorization code.
+Create a free cluster on mongoDB.com
+install mongoose npm package.
+create a config folder in side the src folder and create a database.js file.
+where you can add connection code with database.
+
+app.js
+
+const express = require("express");
+const connectDB = require("./config/database");
+const {adminAuth, userAuth} = require("./middleware/auth");
+const app = express();
+
+connectDB()
+.then(() => {
+    console.log("Database connected Sucessfully!!!");
+    app.listen(3000, () => {
+        console.log('Server listen on port 3000');
+    })
+})
+.catch((err) => {
+    console.log("Database can not connected!!!");
+})
+______________________________________________________________________________
+
+databas.js
+
+const mongoose = require("mongoose");
+
+const connectDB = async() => {
+    await mongoose.connect('mongodb+srv://shubhamb:h6JJI94aomXLzlQY@namastenode.ciolm.mongodb.net/devTinder');
+    
+}
+
+module.exports = connectDB;
+______________________________________________________________________________
+
+auth.js (Middleware)
+
+const adminAuth = (req, res, next) => {
+    console.log('in side admin auth check');
+    const token = "xyz";
+    const Autorization = token === 'xyz';
+    if(!Autorization) {
+        res.status(401).send('Unatorizes request!!');
+    } else {
+        next();
+    }
+}
+
+const userAuth = (req, res, next) => {
+    console.log('in side User auth check');
+    const token = "abcd";
+    const Autorization = token === 'abc';
+    if(!Autorization) {
+        res.status(401).send('Unatorizes request!!');
+    } else {
+        next();
+    }
+}
+
+
+module.exports = {
+    adminAuth,
+    userAuth
+};
+
+
+______________________________________________________________________________
+
+- Create a User Schema
+ create a folder models in side the src folder, and add file like user.js
