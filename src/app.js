@@ -1,10 +1,51 @@
 const express = require("express");
+const {adminAuth, userAuth} = require("./middleware/auth");
 const app = express();
 
+app.use("/admin", adminAuth);
+// app.use("/user", userAuth);
 
-app.get("/user",(req, res) => {
-    res.send({firstName:"Shubhanm", lastName:"Babhulkar"});
+app.get("/admin/getAllData", (req, res) => {
+    res.send("All user data!!!");
 })
+
+app.get("/admin/delete", (req, res) => {
+    res.send("Deleted user data!!");
+})
+
+
+app.get("/user",userAuth, (req, res, next)=>{
+    // res.send('response handler!!!');
+    next();
+},
+(req, res, next)=> {
+    // res.send("2nd response handler!!!");
+    next();
+},
+(req, res)=> {
+    res.send("3rd response handler!!!");
+})
+
+app.get("/user/login", (req, res)=>{
+    console.log('req', req.query);
+    res.send('user loged in successfully');
+})
+
+
+//ROUTE WITH QUERY 
+// http://localhost:3000/user?userId=101&password=admin@123
+// app.get("/user",(req, res) => {
+//     console.log(req.query);
+//     res.send({firstName:"Shubhanm", lastName:"Babhulkar", ...req.query});
+// })
+
+//DYNAMIC ROUTE
+// http://localhost:3000/user/101
+app.get("/user/:userId",(req, res) => {
+    console.log(req.params);
+    res.send({firstName:"Shubhanm", lastName:"Babhulkar", ...req.params});
+})
+
 
 app.post("/user",(req, res) => {
     //Your data saving logic should be here
