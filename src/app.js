@@ -5,6 +5,8 @@ const app = express();
 const User = require("./models/user");
 // Middleware to parse JSON & Form Data
 app.use(express.json());
+const validator = require('validator');
+
 
 app.post("/signup", async (req, res) => {
     const user = new User(req.body);   
@@ -79,12 +81,24 @@ app.get('/userById', async (req, res) => {
 //Update user
 //here if you pass {returnDocument: "after"} as a 3rd orgument then it will retun updated data
 // And if you pass {returnDocument: "before"} as a 3rd orgument then it will retun old data
-app.patch('/user', async (req, res) => {
+app.patch('/user/:userId', async (req, res) => {
     const userData = req.body;
+    const userId = req.params?.userId;
     try {
-        const userExists = await User.exists({_id: userData._id});
+        const allowedFields = ["age", "gender", "about", "photoUrl"];
+        const isUpdateAllowed = Object.keys(userData).every((k) => {
+            return allowedFields.includes(k);
+        })
+        if(!isUpdateAllowed) {
+            throw new Error("Updates not allowes!!");
+        }
+        if(userData?.skills.length > 10) {
+            throw new Error ("Skills should not more than 10");
+        }
+
+        const userExists = await User.exists({_id: userId});
         if(userExists) {
-            const updatedUser = await User.findByIdAndUpdate(userData._id, userData, {returnDocument: "after", runValidators: true});
+            const updatedUser = await User.findByIdAndUpdate(userId, userData, {returnDocument: "after", runValidators: true});
             res.send(updatedUser);
         } else {
             res.status(404).send('User not updated.');
