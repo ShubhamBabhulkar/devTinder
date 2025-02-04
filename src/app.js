@@ -3,19 +3,11 @@ const connectDB = require("./config/database");
 const {adminAuth, userAuth} = require("./middleware/auth");
 const app = express();
 const User = require("./models/user");
-
-
+// Middleware to parse JSON & Form Data
+app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-    const user = new User({
-            firstName: "Sushil",
-            lastName: "Babhulkar",
-            emailId: "sushilbabhulkar@gmail.com",
-            password: "sushil@123",
-            age:34,
-            gender: "Male"
-        });
-   
+    const user = new User(req.body);   
     try{
        await user.save();
        res.send("User Added Successfully!!");
@@ -24,12 +16,119 @@ app.post("/signup", async (req, res) => {
    }
 })
 
+// get data by emailId;
+app.get('/user', async (req, res) => {
+    const userEmail = req.body.emailId;
+    console.log('userEmail', userEmail);
+    try{
+         const users = await User.find({emailId: userEmail});
+         if(users.length === 0){
+             res.status(404).send('User not found!!!');
+        } else {
+             res.send(users);
+         }
+    } catch(err) {
+        res.status(400).send('Request Failed!!!' + err.message);
+    }
+})
+
+// get all the users;
+app.get('/feed', async (req, res) => {
+    try {
+        const users = await User.find({});
+        if(user) {
+            res.send(users);
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch {
+        res.status(401).send('Something went wrong!!!');
+    }
+})
+
+//findOne()
+app.get("/oneuser", async (req, res) => {
+    const userEmailId = req.body.emailId;
+    try {
+        const user = await User.findOne({emailId: userEmailId});
+        if(user) {
+            res.send(user); 
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch(err) {
+        res.status(401).send('Something went wrong!!!');
+    }
+})
+
+//findById()
+app.get('/userById', async (req, res) => {
+    const userId = req.body.id;
+    try{
+        const user = await User.findById(userId);
+        if(user) {
+            res.send(user);
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch(err) {
+        res.status(401).send("Something went wrong!!!");
+    }
+})
+
+//Update user
+//here if you pass {returnDocument: "after"} as a 3rd orgument then it will retun updated data
+// And if you pass {returnDocument: "before"} as a 3rd orgument then it will retun old data
+app.patch('/user', async (req, res) => {
+    const userData = req.body;
+    try {
+        const userExists = await User.exists({_id: userData._id});
+        if(userExists) {
+            const updatedUser = await User.findByIdAndUpdate(userData._id, userData, {returnDocument: "after", runValidators: true});
+            res.send(updatedUser);
+        } else {
+            res.status(404).send('User not updated.');
+        }
+    } catch(err) {
+        res.status(401).send('Request failed!!'+err.message);
+    }
+})
+
+//Delete user
+app.delete("/user", async (req, res) => {
+    const userId = req.body.id;
+    try{
+        const isUserExist = await User.exists({_id: userId});
+        if(isUserExist) {
+            await User.findByIdAndDelete(userId);
+            res.send('User Deleted successfully.');
+        } else {
+            res.status(401).send('User not found.');
+        }
+    } catch(err) {
+        res.status(400).send("Request Failed!!!");
+    }
+})
+
+//Update data using EmailId
+app.patch('/userbyEmail', async (req, res) => {
+    const userData = req.body;
+    try {
+        const updatedUser = await User.findOneAndUpdate({emailId: userData.emailId}, userData, {returnDocument: 'after'});
+        res.send(updatedUser);
+    } catch(err) {
+        res.status(400).send("Request failed!!!");
+    }
+})
+
+
+
 connectDB()
 .then(() => {
     console.log("Database connected Sucessfully!!!");
     app.listen(3000, () => {
         console.log('Server is running on port 3000');
-    });
+    }); 
 })
 .catch((err) => {
     console.log("Database can not connected!!!");
@@ -101,7 +200,7 @@ app.put("/user",(req, res) => {
 })
 
 app.patch("/user", (req, res) => {
-    res.send("Path the data successfully");
+    res.send("Patch the data successfully");
 })
 
 

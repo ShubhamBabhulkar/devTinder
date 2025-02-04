@@ -74,3 +74,167 @@ ______________________________________________________________________________
 
 - Create a User Schema
  create a folder models in side the src folder, and add file like user.js
+
+ const mongoose = require('mongoose');
+// const { Schema } = mongoose;
+
+const userSchema = new mongoose.Schema({
+  firstName: String, // String is shorthand for {type: String}
+  lastName: String,
+  emailId: String,
+  password: String,
+  age:Number,
+  gender: String
+});
+
+module.exports = mongoose.model('User', userSchema);
+
+App.js
+
+const User = require("./models/user");
+
+app.post("/signup", async (req, res) => {
+    const user = new User({
+            firstName: "Sushil",
+            lastName: "Babhulkar",
+            emailId: "sushilbabhulkar@gmail.com",
+            password: "sushil@123",
+            age:34,
+            gender: "Male"
+        });
+   
+    try{
+       await user.save();
+       res.send("User Added Successfully!!");
+   } catch(err) {
+        res.status(400).send('User not added !!!'+ err.message);
+   }
+})
+
+____________________________________________________________________________________________
+
+read the request body in the app.js
+
+app.use(express.json());
+
+// Add User data
+app.post("/signup", async (req, res) => {
+    console.log('req', req.body);
+    const user = new User(req.body);
+   
+    try{
+       await user.save();
+       res.send("User Added Successfully!!");
+   } catch(err) {
+        res.status(400).send('User not added !!!'+ err.message);
+   }
+})
+
+
+// get data by emailId;
+app.get('/user', async (req, res) => {
+    const userEmail = req.body.emailId;
+    console.log('userEmail', userEmail);
+    try{
+         const users = await User.find({emailId: userEmail});
+         if(users.length === 0){
+             res.status(404).send('User not found!!!');
+        } else {
+             res.send(users);
+         }
+    } catch(err) {
+        res.status(400).send('Request Failed!!!' + err.message);
+    }
+})
+
+// get all the users;
+app.get('/feed', async (req, res) => {
+    try {
+        const users = await User.find({});
+        if(user) {
+            res.send(users);
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch {
+        res.status(401).send('Something went wrong!!!');
+    }
+})
+
+//findOne()
+app.get("/oneuser", async (req, res) => {
+    const userEmailId = req.body.emailId;
+    try {
+        const user = await User.findOne({emailId: userEmailId});
+        if(user) {
+            res.send(user); 
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch(err) {
+        res.status(401).send('Something went wrong!!!');
+    }
+})
+
+//findById()
+app.get('/userById', async (req, res) => {
+    const userId = req.body.id;
+    try{
+        const user = await User.findById(userId);
+        if(user) {
+            res.send(user);
+        } else {
+            res.status(404).send('User not found!!');
+        }
+    } catch(err) {
+        res.status(401).send("Something went wrong!!!");
+    }
+})
+
+//Update user
+//here if you pass {returnDocument: "after"} as a 3rd orgument then it will retun updated data
+// And if you pass {returnDocument: "before"} as a 3rd orgument then it will retun old data
+app.patch('/user', async (req, res) => {
+    const userData = req.body;
+    
+    console.log('user Data', userData);
+    try {
+        const userExists = await User.exists({_id: userData._id});
+        console.log('userExists', userExists);
+        if(userExists) {
+            const updatedUser = await User.findByIdAndUpdate(userData._id, userData, {returnDocument: "after"});
+            res.send(updatedUser);
+        } else {
+            res.status(404).send('User not Deleted.');
+        }
+    } catch(err) {
+        res.status(401).send('Request failed!!');
+    }
+})
+
+//Delete user
+app.delete("/user", async (req, res) => {
+    const userId = req.body.id;
+    try{
+        const isUserExist = await User.exists({_id: userId});
+        if(isUserExist) {
+            await User.findByIdAndDelete(userId);
+            res.send('User Deleted successfully.');
+        } else {
+            res.status(401).send('User not found.');
+        }
+    } catch(err) {
+        res.status(400).send("Request Failed!!!");
+    }
+})
+
+//Update data using EmailId
+app.patch('/userbyEmail', async (req, res) => {
+    const userData = req.body;
+    try {
+        const updatedUser = await User.findOneAndUpdate({emailId: userData.emailId}, userData, {returnDocument: 'after'});
+        res.send(updatedUser);
+    } catch(err) {
+        res.status(400).send("Request failed!!!");
+    }
+})
