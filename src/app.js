@@ -1,22 +1,94 @@
 const express = require("express");
 const connectDB = require("./config/database");
-const {adminAuth, userAuth} = require("./middleware/auth");
+const {adminAuth, userAuth, jwtAuth} = require("./middleware/auth");
 const app = express();
 const User = require("./models/user");
 // Middleware to parse JSON & Form Data
-app.use(express.json());
 const validator = require('validator');
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require('jsonwebtoken');
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
 
+app.use(express.json());
+app.use(cookieParser());
 
-app.post("/signup", async (req, res) => {
-    const user = new User(req.body);   
-    try{
-       await user.save();
-       res.send("User Added Successfully!!");
-   } catch(err) {
-        res.status(400).send('User not added !!!'+ err.message);
-   }
-})
+app.use('/', authRouter);
+app.use('/', profileRouter);
+
+// app.post("/signup", async (req, res) => {
+    
+//     try{
+//         validatedSignupData(req);
+//         const { firstName, 
+//             lastName, 
+//             gender, 
+//             age, 
+//             emailId,
+//             about,
+//             photoUrl,
+//             password} = req.body;
+//         const passwordHash = await bcrypt.hash(password, 10);
+
+//         const user = new User({
+//             firstName, 
+//             lastName, 
+//             gender, 
+//             age, 
+//             emailId,
+//             about,
+//             photoUrl,
+//             password: passwordHash
+//         });
+//         await user.save(user);
+//         res.send("User Added Successfully!!");
+//    } catch(err) {
+//         res.status(400).send('ERROR : '+ err.message);
+//    }
+// })
+
+// app.post('/login', async (req, res) => {
+//     try{
+//         const {emailId, password} = req.body;
+//         if(!validator.isEmail(emailId)) {
+//             throw new Error("Invalid Credentials");
+//         }
+
+//         const user = await User.findOne({emailId: emailId});
+
+//         if(!user) {
+//             throw new Error('User is not present in the Database');
+//         }
+
+//         const isPasswordValid = await bcrypt.compare(password, user.password);
+//         if(!isPasswordValid) {
+//             throw new Error('Invalid Credentials')
+//         } else {
+//             const token = await jwt.sign({ _id: user._id }, 'Dev@Tinder@2025', {expiresIn: "0h"});
+//             res.cookie("token", token);
+//             // res.send({message:'User login Successfully', toke: token});
+//             res.send('User login Successfully');
+
+//         }
+
+//     } catch(err) {
+//         res.status(401).send('ERROR :' + err.message);
+//     }
+// })
+
+// app.get("/profile", jwtAuth, async (req, res) => {
+//     try {
+//         const user = req.user; // user is set the middleware
+//         if(user) {
+//             res.send(user);
+//         } else {
+//             throw new Error('User not found.')
+//         }
+//     } catch(err) {
+//         res.status(400).send("ERROR : " + err.message);
+//     }
+// })
 
 // get data by emailId;
 app.get('/user', async (req, res) => {
@@ -85,7 +157,7 @@ app.patch('/user/:userId', async (req, res) => {
     const userData = req.body;
     const userId = req.params?.userId;
     try {
-        const allowedFields = ["age", "gender", "about", "photoUrl"];
+        const allowedFields = ["age", "gender", "about", "photoUrl", "skills"];
         const isUpdateAllowed = Object.keys(userData).every((k) => {
             return allowedFields.includes(k);
         })

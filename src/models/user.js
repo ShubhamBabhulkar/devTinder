@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type:String,
+    enum: {
+      values: ["male", "female", "other"],
+      message: "{VALUE} is not a valid gender type."
+    },
     validate(value) {
       if(!["male", "female", "other"].includes(value)) {
         throw new Error("Gender data is not valid");
@@ -60,11 +64,23 @@ const userSchema = new mongoose.Schema({
   },
   skills: {
     type: [String]
+  },
+  status: {
+    type: String,
+    enum: {
+      values: ["ignore", "intrested", "accepted", "rejected"],
+      message: "{VALUES} is incorrect status type."
+    }
+
   }
 },
 {
    timestamps: true
 }
 );
+
+//creating index is help to search result will come very fast
+userSchema.index({firstName:1})
+userSchema.index({gender:1})
 
 module.exports = mongoose.model('User', userSchema);
